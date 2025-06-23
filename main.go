@@ -1,17 +1,26 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
+
+	"github.com/joho/godotenv"
+	"github.com/leonardomlouzas/GOose/internal/database"
+	_ "github.com/lib/pq"
 )
 
 const bannedWords = "kerfuffle sharbert fornax"
+const filepathRoot = "."
+const port = "8080"
 
 type apiConfig struct {
+	db				*database.Queries
 	fileserverHits	atomic.Int32
 }
 
@@ -61,13 +70,23 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(responseJSON)
-		log.Printf("Error decoding chirp: %v", err)
-		log.Printf("Received chirp: %s", params.Body)
+		log.Printf("Error: decoding chirp: %v", err)
 		return
 	}
 
 	if len(params.Body) > 140 {
-		http.Error(w, "Chirp body exceeds 140 characters", http.StatusBadRequest)
+		response := map[string]string{
+			"error": "Chirp body exceeds 140 characters",
+		}
+		responseJSON, err := json.Marshal(response)
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(responseJSON)
+		log.Printf("Error: Chirp body exceeds 140 characters: %s...", params.Body[:140])
 		return
 	}
 
@@ -98,10 +117,19 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	const filepathRoot = "."
-	const port = "8080"
+	godotenv.Load()
+	
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("Could not connect to database: %v\n", err)
+	}
+	defer db.Close()
 
-	apiCfg := &apiConfig{}
+	apiCfg := &apiConfig{
+		db: database.New(db),
+		fileserverHits: atomic.Int32{},
+	}
 
 	mux := http.NewServeMux()
 
