@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
+
+const bannedWords = "kerfuffle sharbert fornax"
 
 type apiConfig struct {
 	fileserverHits	atomic.Int32
@@ -68,10 +71,22 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	words := strings.Split(params.Body, " ")
+	bannedWordsList := strings.Split(bannedWords, " ")
+	for i, word := range words {
+		for _, bannedWord := range bannedWordsList {
+			if strings.EqualFold(word, bannedWord) {
+				words[i] = "****"
+				break
+			}
+		}
+	}
+	cleanedChirp := strings.Join(words, " ")
+
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	response := map[string]string{
-		"valid": "true",
+		"cleaned_body": cleanedChirp,
 	}
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
