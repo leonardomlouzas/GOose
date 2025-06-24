@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"sync/atomic"
 
 	"github.com/joho/godotenv"
@@ -15,13 +14,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const bannedWords = "kerfuffle sharbert fornax"
 const filepathRoot = "."
 const port = "8080"
 
 type apiConfig struct {
 	db				*database.Queries
 	fileserverHits	atomic.Int32
+	env				string
 }
 
 func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
@@ -47,79 +46,21 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
+	if cfg.env != "dev" {
+		respondWithError(w, http.StatusForbidden, "Not allowed in production environment")
+		return
+	}
+
 	cfg.fileserverHits.Store(0)
-	w.WriteHeader(http.StatusOK)
-}
+	cfg.db.ResetUsersTable(r.Context())
 
-func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
-	type Chirp struct {
-		Body 	string		`json:"body"`
-	}
-	decoder := json.NewDecoder(r.Body)
-	params := Chirp{}
-	err := decoder.Decode(&params)
-	if err != nil || len(params.Body) == 0{
-		response := map[string]string{
-			"error": "Invalid request body",
-		}
-		responseJSON, err := json.Marshal(response)
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(responseJSON)
-		log.Printf("Error: decoding chirp: %v", err)
-		return
-	}
-
-	if len(params.Body) > 140 {
-		response := map[string]string{
-			"error": "Chirp body exceeds 140 characters",
-		}
-		responseJSON, err := json.Marshal(response)
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(responseJSON)
-		log.Printf("Error: Chirp body exceeds 140 characters: %s...", params.Body[:140])
-		return
-	}
-
-	words := strings.Split(params.Body, " ")
-	bannedWordsList := strings.Split(bannedWords, " ")
-	for i, word := range words {
-		for _, bannedWord := range bannedWordsList {
-			if strings.EqualFold(word, bannedWord) {
-				words[i] = "****"
-				break
-			}
-		}
-	}
-	cleanedChirp := strings.Join(words, " ")
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	response := map[string]string{
-		"cleaned_body": cleanedChirp,
-	}
-	responseJSON, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	w.Write(responseJSON)
-	log.Printf("Received chirp: %s", params.Body)
+	respondWithJSON(w, http.StatusOK, "Reset successful")
 }
 
 func main() {
 	godotenv.Load()
-	
 	dbURL := os.Getenv("DB_URL")
+	env := os.Getenv("ENVIRONMENT")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("Could not connect to database: %v\n", err)
@@ -129,6 +70,7 @@ func main() {
 	apiCfg := &apiConfig{
 		db: database.New(db),
 		fileserverHits: atomic.Int32{},
+		env: env,
 	}
 
 	mux := http.NewServeMux()
@@ -137,6 +79,7 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("POST /api/validate_chirp", apiCfg.handlerPostChirp)
 	
 	server := &http.Server {
@@ -154,4 +97,26 @@ func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(http.StatusText(http.StatusOK)))
+}
+
+func respondWithError(w http.ResponseWriter, code int, msg string) {
+	log.Printf("Responding with %d error: %s", code, msg)
+	type errResponse struct {
+		Error string `json:"error"`
+	}
+	respondWithJSON(w, code, errResponse{
+		Error: msg,
+	})
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("Failed to marshal JSON response: %v", payload)
+		w.WriteHeader(500)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(data)
 }
