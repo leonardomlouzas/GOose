@@ -2,51 +2,86 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
+	"time"
 
-	"github.com/joho/godotenv"
+	"github.com/google/uuid"
+	"github.com/leonardomlouzas/GOose/internal/database"
 )
 
-func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
-	godotenv.Load()
-	bannedWords := os.Getenv("BANNED_WORDS")
+type Chirp struct {
+	ID			uuid.UUID	`json:"id"`
+	CreatedAt	time.Time	`json:"created_at"`
+	UpdatedAt	time.Time	`json:"updated_at"`
+	Body		string		`json:"body"`
+	UserID		uuid.UUID	`json:"user_id"`
+}
 
-	type Chirp struct {
-		Body string `json:"body"`
+func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
+	type ChirpReq struct {
+		Body   string    `json:"body"`
+		UserID uuid.UUID `json:"user_id"`
 	}
 	decoder := json.NewDecoder(r.Body)
-	params := Chirp{}
+	params := ChirpReq{}
 	err := decoder.Decode(&params)
-	if err != nil || len(params.Body) == 0 {
+	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request body")
-		log.Printf("Error: decoding chirp: %v", err)
 		return
 	}
 
-	if len(params.Body) > 140 {
-		respondWithError(w, http.StatusBadRequest, "Chirp body exceeds 140 characters")
-		log.Printf("Error: Chirp body exceeds 140 characters: %s...", params.Body[:140])
+	cleanedBody, err := validateAndCleanChirp(params.Body, cfg.bannedWords)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	
+	user, err := cfg.db.GetUserById(r.Context(), params.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "User not found")
+		log.Printf("Error: user not found with ID %s while posting a chirp: %v", params.UserID, err)
 		return
 	}
 
-	words := strings.Split(params.Body, " ")
-	bannedWordsList := strings.Split(bannedWords, " ")
+	chirp, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		Body:      cleanedBody,
+		UserID:    user.ID,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to create chirp")
+		log.Printf("Error: creating chirp: %v", err)
+		return
+	}
+	
+	respondWithJSON(w, http.StatusCreated, Chirp{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserID:    chirp.UserID,
+	})
+	log.Printf("Chirp %s created by user %s", chirp.ID, chirp.UserID)
+}
+
+func validateAndCleanChirp(body string, bannedWords map[string]struct{}) (string, error) {
+	if len(body) == 0 {
+		return "", fmt.Errorf("chirp body cannot be empty")
+	}
+	if len(body) > 140 {
+		return "", fmt.Errorf("chirp is too long")
+	}
+
+	words := strings.Split(body, " ")
 	for i, word := range words {
-		for _, bannedWord := range bannedWordsList {
-			if strings.EqualFold(word, bannedWord) {
-				words[i] = "****"
-				break
-			}
+		if _, ok := bannedWords[strings.ToLower(word)]; ok {
+			words[i] = "****"
 		}
 	}
-	cleanedChirp := strings.Join(words, " ")
-
-	type response struct {
-		CleanedBody string `json:"cleaned_body"`
-	}
-	respondWithJSON(w, http.StatusOK, response{CleanedBody: cleanedChirp})
-	log.Printf("Received chirp: %s", params.Body)
+	return strings.Join(words, " "), nil
 }

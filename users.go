@@ -57,3 +57,28 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	})
 	log.Printf("User ID %s created: %s\n",user.ID, user.Email)
 }
+
+func (cfg *apiConfig) handlerGetUserByID(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	userID := params.Get("id")
+
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid user id format")
+		log.Printf("Error parsing id: %s. Error: %s",userID, err)
+		return
+	}
+
+	user, err := cfg.db.GetUserById(r.Context(), uid)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("getting user by id: %v", err))
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, User{
+		ID:        user.ID,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	})
+}

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync/atomic"
 
 	"github.com/joho/godotenv"
@@ -21,6 +22,7 @@ type apiConfig struct {
 	db				*database.Queries
 	fileserverHits	atomic.Int32
 	env				string
+	bannedWords		map[string]struct{}
 }
 
 func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +63,13 @@ func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	env := os.Getenv("ENVIRONMENT")
+	bannedWordsRaw := os.Getenv("BANNED_WORDS")
+	bannedWordsList := strings.Split(bannedWordsRaw, " ")
+	bannedWordsMap := make(map[string]struct{})
+	for _, word := range bannedWordsList {
+		bannedWordsMap[strings.ToLower(word)] = struct{}{}
+	}
+
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("Could not connect to database: %v\n", err)
@@ -70,7 +79,8 @@ func main() {
 	apiCfg := &apiConfig{
 		db: database.New(db),
 		fileserverHits: atomic.Int32{},
-		env: env,
+		env:            env,
+		bannedWords:    bannedWordsMap,
 	}
 
 	mux := http.NewServeMux()
@@ -80,7 +90,8 @@ func main() {
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
-	mux.HandleFunc("POST /api/validate_chirp", apiCfg.handlerPostChirp)
+	mux.HandleFunc("GET /api/users", apiCfg.handlerGetUserByID)
+	mux.HandleFunc("POST /api/chirps", apiCfg.handlerPostChirp)
 	
 	server := &http.Server {
 		Addr:		":" + port,
