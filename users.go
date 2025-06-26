@@ -58,6 +58,17 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	log.Printf("User ID %s created: %s\n",user.ID, user.Email)
 }
 
+func (cfg *apiConfig) handlerGetAllUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := cfg.db.GetAllUsers(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error retrieving users")
+		log.Printf("retrieving users table: %s", err)
+	}
+
+	respondWithJSON(w, http.StatusOK, users)
+	log.Printf("Users retrieved successfully")
+}
+
 func (cfg *apiConfig) handlerGetUserByID(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	userID := params.Get("id")

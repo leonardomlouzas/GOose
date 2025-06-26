@@ -56,7 +56,7 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 	cfg.fileserverHits.Store(0)
 	cfg.db.ResetUsersTable(r.Context())
 
-	respondWithJSON(w, http.StatusOK, "Reset successful")
+	respondWithJSON(w, http.StatusOK, struct{Message string}{Message: "Reset successful"})
 }
 
 func main() {
@@ -90,7 +90,8 @@ func main() {
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
-	mux.HandleFunc("GET /api/users", apiCfg.handlerGetUserByID)
+	mux.HandleFunc("GET /api/users", apiCfg.handlerGetAllUsers)
+	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerPostChirp)
 	
 	server := &http.Server {

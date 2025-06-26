@@ -69,6 +69,42 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Chirp %s created by user %s", chirp.ID, chirp.UserID)
 }
 
+func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.db.GetAllChirps(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve chirps")
+		log.Printf("Error retrieving chirps: %s", err)
+	}
+
+	respondWithJSON(w, http.StatusOK, chirps)
+	log.Printf("Chirps retrieved successfully")
+}
+
+func (cfg *apiConfig) handlerGetOneChirp(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	chirpID := params.Get("id")
+
+	uid, err := uuid.Parse(chirpID)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid chirp ID")
+		log.Printf("Error parsing chirp id: %s. Error: %s", chirpID, err)
+	}
+
+	chirp, err := cfg.db.GetOneChirp(r.Context(), uid)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("getting chirp by id: %v", err))
+		log.Printf("Error retrieving chirp by id: %s", err)
+	}
+
+	respondWithJSON(w, http.StatusOK, Chirp{
+		ID: chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body: chirp.Body,
+		UserID: chirp.UserID,
+	})
+}
+
 func validateAndCleanChirp(body string, bannedWords map[string]struct{}) (string, error) {
 	if len(body) == 0 {
 		return "", fmt.Errorf("chirp body cannot be empty")
