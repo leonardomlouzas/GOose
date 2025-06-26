@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -29,7 +30,8 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 	params := ChirpReq{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		log.Printf("error decoding request payload while posting chirp: %v", err)
 		return
 	}
 
@@ -41,8 +43,7 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 	
 	user, err := cfg.db.GetUserById(r.Context(), params.UserID)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, "User not found")
-		log.Printf("Error: user not found with ID %s while posting a chirp: %v", params.UserID, err)
+		respondWithError(w, http.StatusNotFound, "user not found")
 		return
 	}
 
@@ -54,8 +55,8 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 		UserID:    user.ID,
 	})
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to create chirp")
-		log.Printf("Error: creating chirp: %v", err)
+		respondWithError(w, http.StatusInternalServerError, "error creating chirp")
+		log.Printf("error inserting chirp into db while posting chirp: %v", err)
 		return
 	}
 	
@@ -66,34 +67,37 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 		Body:      chirp.Body,
 		UserID:    chirp.UserID,
 	})
-	log.Printf("Chirp %s created by user %s", chirp.ID, chirp.UserID)
 }
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
 	chirps, err := cfg.db.GetAllChirps(r.Context())
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to retrieve chirps")
-		log.Printf("Error retrieving chirps: %s", err)
+		respondWithError(w, http.StatusInternalServerError, "error retrieving chirps")
+		log.Printf("error retrieving chirps table: %s", err)
 	}
 
 	respondWithJSON(w, http.StatusOK, chirps)
-	log.Printf("Chirps retrieved successfully")
 }
 
 func (cfg *apiConfig) handlerGetOneChirp(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	chirpID := params.Get("id")
-
+	chirpID := r.PathValue("id")
 	uid, err := uuid.Parse(chirpID)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid chirp ID")
-		log.Printf("Error parsing chirp id: %s. Error: %s", chirpID, err)
+		respondWithError(w, http.StatusBadRequest, "invalid chirp ID")
+		log.Printf("error parsing chirp ID: %s while retrieving chirp by id. Error: %s", chirpID, err)
+		return
 	}
 
 	chirp, err := cfg.db.GetOneChirp(r.Context(), uid)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("getting chirp by id: %v", err))
-		log.Printf("Error retrieving chirp by id: %s", err)
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "chirp not found")
+			return
+		}
+	
+		respondWithError(w, http.StatusInternalServerError, "error retrieving chirp by id")
+		log.Printf("error retrieving chirp by id %s: %v", chirpID, err)
+		return
 	}
 
 	respondWithJSON(w, http.StatusOK, Chirp{

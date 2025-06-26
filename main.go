@@ -91,9 +91,11 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("GET /api/users", apiCfg.handlerGetAllUsers)
-	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
+	mux.HandleFunc("GET /api/users/{id}", apiCfg.handlerGetUserByID)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerPostChirp)
-	
+	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
+	mux.HandleFunc("GET /api/chirps/{id}", apiCfg.handlerGetOneChirp)
+
 	server := &http.Server {
 		Addr:		":" + port,
 		Handler: 	mux,
@@ -112,7 +114,6 @@ func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
-	log.Printf("Responding with %d error: %s", code, msg)
 	type errResponse struct {
 		Error string `json:"error"`
 	}

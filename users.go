@@ -1,8 +1,8 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -28,13 +28,15 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("decoding request payload while creating user: %v", err))
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		log.Printf("error decoding request payload while creating user: %v", err)
 		return
 	}
 
 	email := strings.TrimSpace(params.Email)
 	if email == "" {
-		respondWithError(w, http.StatusBadRequest, "email not provided while creating user")
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		log.Print("error while creating user. Email not provided")
 		return
 	}
 
@@ -45,7 +47,8 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("creating user: %v\n", err))
+		respondWithError(w, http.StatusInternalServerError, "error creating user")
+		log.Printf("error inserting user into db while creating user: %s", err)
 		return
 	}
 
@@ -55,34 +58,37 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	})
-	log.Printf("User ID %s created: %s\n",user.ID, user.Email)
 }
 
 func (cfg *apiConfig) handlerGetAllUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := cfg.db.GetAllUsers(r.Context())
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Error retrieving users")
-		log.Printf("retrieving users table: %s", err)
+		respondWithError(w, http.StatusInternalServerError, "error retrieving users")
+		log.Printf("error retrieving users table: %s", err)
+		return
 	}
 
 	respondWithJSON(w, http.StatusOK, users)
-	log.Printf("Users retrieved successfully")
 }
 
 func (cfg *apiConfig) handlerGetUserByID(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	userID := params.Get("id")
-
+	userID := r.PathValue("id")
 	uid, err := uuid.Parse(userID)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid user id format")
-		log.Printf("Error parsing id: %s. Error: %s",userID, err)
+		respondWithError(w, http.StatusBadRequest, "invalid user ID")
+		log.Printf("error parsing user ID: %s while retrieving user by ID. Error: %s", userID, err)
 		return
 	}
 
 	user, err := cfg.db.GetUserById(r.Context(), uid)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("getting user by id: %v", err))
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "user not found")
+			return
+		}
+	
+		respondWithError(w, http.StatusInternalServerError, "error getting user by id")
+		log.Printf("error retrieving user by id: %s. Error: %v", userID, err)
 		return
 	}
 
