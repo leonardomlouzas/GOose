@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/leonardomlouzas/GOose/internal/auth"
 	"github.com/leonardomlouzas/GOose/internal/database"
 )
 
@@ -24,11 +25,22 @@ type Chirp struct {
 func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 	type ChirpReq struct {
 		Body   string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
 	}
+
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "invalid token")
+		return
+	}
+	userID, err := auth.ValidateJWT(token, cfg.jwt_secret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "invalid token")
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	params := ChirpReq{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid request body")
 		log.Printf("error decoding request payload while posting chirp: %v", err)
@@ -41,7 +53,7 @@ func (cfg *apiConfig) handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	user, err := cfg.db.GetUserById(r.Context(), params.UserID)
+	user, err := cfg.db.GetUserById(r.Context(), userID)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "user not found")
 		return

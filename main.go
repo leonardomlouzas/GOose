@@ -22,6 +22,7 @@ type apiConfig struct {
 	db				*database.Queries
 	fileserverHits	atomic.Int32
 	env				string
+	jwt_secret		string
 	bannedWords		map[string]struct{}
 }
 
@@ -63,6 +64,7 @@ func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	env := os.Getenv("ENVIRONMENT")
+	jwt_secret := os.Getenv("JWT_SECRET")
 	bannedWordsRaw := os.Getenv("BANNED_WORDS")
 	bannedWordsList := strings.Split(bannedWordsRaw, " ")
 	bannedWordsMap := make(map[string]struct{})
@@ -80,6 +82,7 @@ func main() {
 		db: database.New(db),
 		fileserverHits: atomic.Int32{},
 		env:            env,
+		jwt_secret:     jwt_secret,
 		bannedWords:    bannedWordsMap,
 	}
 

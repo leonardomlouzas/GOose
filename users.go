@@ -18,6 +18,7 @@ type User struct {
 	Email     		string	    `json:"email"`
 	CreatedAt 		time.Time	`json:"created_at"`
 	UpdatedAt 		time.Time	`json:"updated_at"`
+	Token			string		`json:"token"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -123,8 +124,9 @@ func (cfg *apiConfig) handlerGetUserByID(w http.ResponseWriter, r *http.Request)
 
 func (cfg *apiConfig) handlerLoginByPassword(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email		string	`json:"email"`
-		Password	string	`json:"password"`
+		Email				string	`json:"email"`
+		Password			string	`json:"password"`
+		Expires_in_seconds	int		`json:"expires_in_seconds"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -138,11 +140,16 @@ func (cfg *apiConfig) handlerLoginByPassword(w http.ResponseWriter, r *http.Requ
 
 	email := strings.TrimSpace(params.Email)
 	password := strings.TrimSpace(params.Password)
+	expiresIn := time.Duration(params.Expires_in_seconds) * time.Second
 
 	if email == "" || password == "" {
 		respondWithError(w, http.StatusBadRequest, "invalid request body")
 		log.Print("error while login user. Email/Password not provided")
 		return
+	}
+
+	if expiresIn < 1 || expiresIn > 60 * 60 {
+		expiresIn = 60 * time.Second * 60
 	}
 
 	user, err := cfg.db.GetUserByEmail(r.Context(), email)
@@ -157,11 +164,18 @@ func (cfg *apiConfig) handlerLoginByPassword(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	token, err := auth.MakeJWT(user.ID, cfg.jwt_secret, expiresIn)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "error while generating token")
+		log.Printf("error generating token while login. Error: %s", err)
+		return
+	}
 
 	respondWithJSON(w, http.StatusOK, User{
 		ID:        user.ID,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
+		Token:     token,
 	})
 }
