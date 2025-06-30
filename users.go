@@ -21,8 +21,8 @@ type User struct {
 	Email     		string	    `json:"email"`
 	CreatedAt 		time.Time	`json:"created_at"`
 	UpdatedAt 		time.Time	`json:"updated_at"`
-	Token			string		`json:"token"`
-	RefreshToken	string		`json:"refresh_token"`
+	Token			string		`json:"token,omitempty"`
+	RefreshToken	string		`json:"refresh_token,omitempty"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +70,68 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	respondWithJSON(w, http.StatusCreated, User{
+		ID:        user.ID,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	})
+}
+
+func (cfg *apiConfig) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
+	type UserReq struct {
+		Email		string	`json:"email"`
+		Password	string	`json:"password"`
+	}
+
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "invalid token")
+		return
+	}
+	userID, err := auth.ValidateJWT(token, cfg.jwt_secret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "invalid token")
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := UserReq{}
+	err = decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		log.Printf("error decoding request payload while updating user: %v", err)
+		return
+	}
+
+	email := strings.TrimSpace(params.Email)
+	password := strings.TrimSpace(params.Password)
+
+	if email == "" || password == "" {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		log.Print("error while updating user. Email/Password not provided")
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(password)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid password")
+		log.Printf("error while hashing password. Error: %s", err)
+		return
+	}
+
+	user, err := cfg.db.UpdateUserByID(r.Context(), database.UpdateUserByIDParams{
+		ID:        userID,
+		Email:     email,
+		HashedPassword: hashedPassword,
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "error updating user")
+		log.Printf("error updating user in db while updating user: %s", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, User{
 		ID:        user.ID,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
