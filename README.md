@@ -13,6 +13,7 @@ This project is built with a focus on clean code, standard library features, and
 - **Webhook Integration**: An endpoint to receive webhooks from a third-party service Polka (fictional payment service) to handle user upgrades to a premium status.
 - **Database Management**: Uses `sqlc` for type-safe Go code generation from SQL queries and `goose` for database migrations.
 - **Admin Tools**: Includes endpoints for viewing site metrics and resetting the database in a development environment.
+- **Postman Endpoint**: Includes a json that can be imported in Postman containing all the endpoints with different scenarios for validation.
 
 ## Tech Stack
 

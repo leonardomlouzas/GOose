@@ -1,0 +1,2043 @@
+{
+	"info": {
+		"_postman_id": "9a6a0972-20fb-4acb-a0ec-e8012b84eaa8",
+		"name": "GOose",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19360728"
+	},
+	"item": [
+		{
+			"name": "api",
+			"item": [
+				{
+					"name": "validade_users",
+					"item": [
+						{
+							"name": "GET users - 200",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/users",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET user BY ID - 200",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/users/{{userID}}",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users",
+										"{{userID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET user WRONG ID - 400",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/users/wrongID",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users",
+										"wrongID"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET NONEXSTENT  ID - 404",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/users/48b5becd-f98c-4897-98aa-be37eecb6a68",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users",
+										"48b5becd-f98c-4897-98aa-be37eecb6a68"
+									]
+								},
+								"description": "I used a random UUID in here to do the request as it's unlikely we will ever generate it."
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE user - 200",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"let req = JSON.parse(pm.request.body.raw);",
+											"let res = pm.response.json();",
+											"pm.collectionVariables.set(\"userEmail\", req.email);",
+											"pm.collectionVariables.set(\"userPassword\", req.password);",
+											"pm.collectionVariables.set(\"userID\", res.id);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"test@chirpy.com\",\n    \"password\": \"P4s$W0RD\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/users",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE user  NO BODY - 400",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/users",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE user  WRONG BODY - 400",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"wrong\": \"body\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/users",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE user - 200",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"let req = JSON.parse(pm.request.body.raw);",
+											"let res = pm.response.json();",
+											"pm.collectionVariables.set(\"userEmail\", res.email);",
+											"pm.collectionVariables.set(\"userPassword\", req.password);",
+											"pm.collectionVariables.set(\"userID\", res.id);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"newtest@chirpy.com\",\n    \"password\": \"newP4s$W0RD\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/users",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE user NO TOKEN - 401",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"test@chirpy.com\",\n    \"password\": \"P4s$W0RD\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/users",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE user WRONG TOKEN - 401",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "Bearer WrongToken",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"test@chirpy.com\",\n    \"password\": \"P4s$W0RD\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/users",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE user NO BODY- 400",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/users",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE user WRONG BODY- 400",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"test@chirpy.com\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/users",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validade_chirps",
+					"item": [
+						{
+							"name": "GET - 200",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/chirps?sort_by=desc",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									],
+									"query": [
+										{
+											"key": "sort_by",
+											"value": "desc"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET BY chirp ID - 200",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/chirps/{{chirpID}}",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps",
+										"{{chirpID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET WRONG chirp ID - 400",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/chirps/wrongID",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps",
+										"wrongID"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET BY NONEXISTENT owner ID - 404",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/chirps/48b5becd-f98c-4897-98aa-be37eecb6a68",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps",
+										"48b5becd-f98c-4897-98aa-be37eecb6a68"
+									]
+								},
+								"description": "I used a random UUID in here to do the request as it's unlikely we will ever generate it."
+							},
+							"response": []
+						},
+						{
+							"name": "GET BY owner ID - 200",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{url}}api/chirps?author_id={{userID}}",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									],
+									"query": [
+										{
+											"key": "author_id",
+											"value": "{{userID}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET BY NONEXISTENT owner ID - 200",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{url}}api/chirps?author_id=48b5becd-f98c-4897-98aa-be37eecb6a68",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									],
+									"query": [
+										{
+											"key": "author_id",
+											"value": "48b5becd-f98c-4897-98aa-be37eecb6a68"
+										}
+									]
+								},
+								"description": "I used a random UUID in here to do the request as it's unlikely we will ever generate it."
+							},
+							"response": []
+						},
+						{
+							"name": "GET BY WRONG owner ID - 400",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{url}}api/chirps?author_id=wrongID",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									],
+									"query": [
+										{
+											"key": "author_id",
+											"value": "wrongID"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE - 200",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"let response = pm.response.json();",
+											"pm.collectionVariables.set(\"chirpID\", response.id);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "text/plain",
+										"name": "content-type",
+										"type": "text"
+									},
+									{
+										"key": "Content-Length",
+										"value": "<calculated when request is sent>",
+										"name": "content-length",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"body\": \"There should be 3 sets of '****' here: kerfuffle ShArBeRt FORNAX\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/chirps",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE INVALID BODY - 400",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "text/plain",
+										"name": "content-type",
+										"type": "text"
+									},
+									{
+										"key": "Content-Length",
+										"value": "<calculated when request is sent>",
+										"name": "content-length",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"wrong\": \"Body\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/chirps",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE NO BODY - 400",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Content-Length",
+										"value": "0",
+										"name": "content-length",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{url}}api/chirps",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE NO TOKEN - 401",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Content-Length",
+										"value": "0",
+										"name": "content-length",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{url}}api/chirps",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE WRONG TOKEN - 401",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Content-Length",
+										"value": "0",
+										"name": "content-length",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer WrongToken",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{url}}api/chirps",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE BODY TOO LONG - 400",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"body\": \"This is an example of a chirp that is way too long. It exceeds the character limit that we have set for chirps. Please make sure your chirp is concise and to the point.\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/chirps",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE EMPTY CHIRP - 400",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"body\": \"\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/chirps",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DELETE - 204",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/chirps/{{chirpID}}",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps",
+										"{{chirpID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DELETE NO TOKEN - 401",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/chirps/{{chirpID}}",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps",
+										"{{chirpID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DELETE WRONG TOKEN - 401",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "Bearer WrongToken",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/chirps/{{chirpID}}",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps",
+										"{{chirpID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DELETE NONEXISTENT ID - 404",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/chirps/48b5becd-f98c-4897-98aa-be37eecb6a68",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"chirps",
+										"48b5becd-f98c-4897-98aa-be37eecb6a68"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validate_login",
+					"item": [
+						{
+							"name": "SUCCESS - 200",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"let res = pm.response.json()",
+											"pm.collectionVariables.set(\"jwt_token\", res.token)",
+											"pm.collectionVariables.set(\"refresh_token\", res.refresh_token)"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/login",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "WRONG EMAIL - 401",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"wrong@email.com\",\n    \"password\": \"{{userPassword}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/login",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "WRONG PASSWORD - 401",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"WrongPassword\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/login",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "WRONG BODY - 400",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"wrong\": \"body\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/login",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "NO BODY - 400",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/login",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validate_refresh_token",
+					"item": [
+						{
+							"name": "CREATE - 200",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"let res = pm.response.json()",
+											"pm.collectionVariables.set(\"jwt_token\", res.token)"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{refresh_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/refresh",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"refresh"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE NO TOKEN - 401",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"let res = pm.response.json()",
+											"pm.collectionVariables.set(\"jwt_token\", res.token)"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/refresh",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"refresh"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE WRONG TOKEN - 401",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"let res = pm.response.json()",
+											"pm.collectionVariables.set(\"jwt_token\", res.token)"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Content-Length",
+										"value": "0",
+										"name": "content-length",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "WrongToken",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{url}}api/refresh",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"refresh"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "REVOKE - 204",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{refresh_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/revoke",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"revoke"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "REVOKE NO TOKEN - 401",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"let res = pm.response.json()",
+											"pm.collectionVariables.set(\"jwt_token\", res.token)"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/refresh",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"refresh"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "REVOKE WRONG TOKEN - 401",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cache-Control",
+										"value": "no-cache",
+										"name": "cache-control",
+										"type": "text"
+									},
+									{
+										"key": "Postman-Token",
+										"value": "<calculated when request is sent>",
+										"name": "postman-token",
+										"type": "text"
+									},
+									{
+										"key": "Content-Length",
+										"value": "0",
+										"name": "content-length",
+										"type": "text"
+									},
+									{
+										"key": "Host",
+										"value": "<calculated when request is sent>",
+										"name": "host",
+										"type": "text"
+									},
+									{
+										"key": "User-Agent",
+										"value": "PostmanRuntime/7.39.1",
+										"name": "user-agent",
+										"type": "text"
+									},
+									{
+										"key": "Accept",
+										"value": "*/*",
+										"name": "accept",
+										"type": "text"
+									},
+									{
+										"key": "Accept-Encoding",
+										"value": "gzip, deflate, br",
+										"name": "accept-encoding",
+										"type": "text"
+									},
+									{
+										"key": "Connection",
+										"value": "keep-alive",
+										"name": "connection",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "WrongToken",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{url}}api/refresh",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"refresh"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validate_premium_user",
+					"item": [
+						{
+							"name": "UPDATE status  - 204",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "ApiKey {{api_key}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "Authorization",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"event\": \"user.upgraded\",\n    \"data\": {\n        \"user_id\": \"{{userID}}\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/polka/webhooks",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"polka",
+										"webhooks"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE status NO API KEY - 401",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"event\": \"user.upgraded\",\n    \"data\": {\n        \"user_id\": \"{{userID}}\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/polka/webhooks",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"polka",
+										"webhooks"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE status WRONG TOKEN - 401",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "ApiKey wrongKey",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "Authorization",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"event\": \"user.upgraded\",\n    \"data\": {\n        \"user_id\": \"{{userID}}\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/polka/webhooks",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"polka",
+										"webhooks"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE status  NO BODY - 400",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "key",
+											"value": "Authorization",
+											"type": "string"
+										},
+										{
+											"key": "value",
+											"value": "ApiKey {{api_key}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{url}}api/polka/webhooks",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"polka",
+										"webhooks"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE status  WRONG BODY - 400",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "ApiKey {{api_key}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "Authorization",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"event\": \"wrongValue\",\n    \"data\": {\n        \"user_id\": {{userID}}\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}api/polka/webhooks",
+									"host": [
+										"{{url}}api"
+									],
+									"path": [
+										"polka",
+										"webhooks"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "admin",
+			"item": [
+				{
+					"name": "METRICS - 200",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@chirpy.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}admin/metrics",
+							"host": [
+								"{{url}}admin"
+							],
+							"path": [
+								"metrics"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RESET - 200",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@chirpy.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}admin/reset",
+							"host": [
+								"{{url}}admin"
+							],
+							"path": [
+								"reset"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "http://localhost:8080/",
+			"type": "string"
+		},
+		{
+			"key": "userID",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "chirpID",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "userPassword",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "userEmail",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "api_key",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
