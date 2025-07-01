@@ -23,6 +23,7 @@ type User struct {
 	UpdatedAt 		time.Time	`json:"updated_at"`
 	Token			string		`json:"token,omitempty"`
 	RefreshToken	string		`json:"refresh_token,omitempty"`
+	IsChirpyRed		bool		`json:"is_chirpy_red"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -70,10 +71,11 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	respondWithJSON(w, http.StatusCreated, User{
-		ID:        user.ID,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:        		user.ID,
+		Email:     		user.Email,
+		CreatedAt: 		user.CreatedAt,
+		UpdatedAt: 		user.UpdatedAt,
+		IsChirpyRed: 	user.IsChirpyRed,
 	})
 }
 
@@ -132,10 +134,11 @@ func (cfg *apiConfig) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, User{
-		ID:        user.ID,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:        		user.ID,
+		Email:     		user.Email,
+		CreatedAt: 		user.CreatedAt,
+		UpdatedAt: 		user.UpdatedAt,
+		IsChirpyRed: 	user.IsChirpyRed,
 	})
 }
 
@@ -150,10 +153,11 @@ func (cfg *apiConfig) handlerGetAllUsers(w http.ResponseWriter, r *http.Request)
 	users := make([]User, len(dbUsers))
 	for i, dbUser := range dbUsers {
 		users[i] = User{
-			ID:        dbUser.ID,
-			Email:     dbUser.Email,
-			CreatedAt: dbUser.CreatedAt,
-			UpdatedAt: dbUser.UpdatedAt,
+			ID:        		dbUser.ID,
+			Email:     		dbUser.Email,
+			CreatedAt: 		dbUser.CreatedAt,
+			UpdatedAt: 		dbUser.UpdatedAt,
+			IsChirpyRed: 	dbUser.IsChirpyRed,
 		}
 	}
 	respondWithJSON(w, http.StatusOK, users)
@@ -181,17 +185,18 @@ func (cfg *apiConfig) handlerGetUserByID(w http.ResponseWriter, r *http.Request)
 	}
 
 	respondWithJSON(w, http.StatusOK, User{
-		ID:        user.ID,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:        		user.ID,
+		Email:     		user.Email,
+		CreatedAt: 		user.CreatedAt,
+		UpdatedAt: 		user.UpdatedAt,
+		IsChirpyRed: 	user.IsChirpyRed,
 	})
 }
 
 func (cfg *apiConfig) handlerLoginByPassword(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email				string	`json:"email"`
-		Password			string	`json:"password"`
+		Email		string	`json:"email"`
+		Password	string	`json:"password"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -258,12 +263,13 @@ func (cfg *apiConfig) handlerLoginByPassword(w http.ResponseWriter, r *http.Requ
 	}
 
 	respondWithJSON(w, http.StatusOK, User{
-		ID:        user.ID,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Token:     token,
-		RefreshToken: refreshTokenDB.Token,
+		ID:        		user.ID,
+		Email:     		user.Email,
+		CreatedAt: 		user.CreatedAt,
+		UpdatedAt: 		user.UpdatedAt,
+		Token:     		token,
+		RefreshToken: 	refreshTokenDB.Token,
+		IsChirpyRed: 	user.IsChirpyRed,
 	})
 }
 
@@ -322,4 +328,49 @@ func (cfg *apiConfig) handlerRevokeRefreshToken(w http.ResponseWriter, r *http.R
 	
 	w.WriteHeader(http.StatusNoContent)
 	w.Write([]byte(""))
+}
+
+func (cfg *apiConfig) handlerAlterUserPremiumStatus(w http.ResponseWriter, r *http.Request) {
+	type reqBody struct {
+		Event	string	`json:"event"`
+		Data	struct{
+			UserID		string	`json:"user_id"`
+		}
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := reqBody{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	event := strings.TrimSpace(params.Event)
+	userID := strings.TrimSpace(params.Data.UserID)
+	if userID == "" || event != "user.upgraded" {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid user ID")
+		return
+	}
+
+	_, err = cfg.db.AlterUserPremiumStatus(r.Context(), database.AlterUserPremiumStatusParams{
+		ID:				uid,
+		IsChirpyRed:	true,
+		UpdatedAt: 		time.Now().UTC(),
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "error updating user")
+		log.Printf("error updating user in db while altering Premium status: %s", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
