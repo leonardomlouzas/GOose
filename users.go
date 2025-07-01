@@ -338,9 +338,20 @@ func (cfg *apiConfig) handlerAlterUserPremiumStatus(w http.ResponseWriter, r *ht
 		}
 	}
 
+	authKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "invalid API key")
+		return
+	}
+
+	if authKey != cfg.polka_key {
+		respondWithError(w, http.StatusUnauthorized, "invalid API key")
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	params := reqBody{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -348,7 +359,7 @@ func (cfg *apiConfig) handlerAlterUserPremiumStatus(w http.ResponseWriter, r *ht
 
 	event := strings.TrimSpace(params.Event)
 	userID := strings.TrimSpace(params.Data.UserID)
-	if userID == "" || event != "user.upgraded" {
+	if event != "user.upgraded" {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
