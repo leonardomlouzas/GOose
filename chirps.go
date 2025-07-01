@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -127,6 +128,7 @@ func (cfg *apiConfig) handlerDeleteChirpByID(w http.ResponseWriter, r *http.Requ
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
 	author_id := r.URL.Query().Get("author_id")
+	sort_by := r.URL.Query().Get("sort_by")
 	var chirps []database.Chirp
 	var err error
 	var uid uuid.UUID
@@ -154,6 +156,11 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 		}
 	}
 
+	if sort_by == "desc" {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].CreatedAt.After(chirps[j].CreatedAt)
+		})
+	}
 	respondWithJSON(w, http.StatusOK, chirps)
 }
 
