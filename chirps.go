@@ -126,10 +126,32 @@ func (cfg *apiConfig) handlerDeleteChirpByID(w http.ResponseWriter, r *http.Requ
 }
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.db.GetAllChirps(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "error retrieving chirps")
-		log.Printf("error retrieving chirps table: %s", err)
+	author_id := r.URL.Query().Get("author_id")
+	var chirps []database.Chirp
+	var err error
+	var uid uuid.UUID
+
+	if author_id != "" {
+		uid, err = uuid.Parse(author_id)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "invalid user ID")
+			return
+		}
+
+		chirps, err = cfg.db.GetAllChirpsByUserID(r.Context(), uid)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "error retrieving chirps")
+			log.Printf("error retrieving chirps by userID: %s", err)
+			return
+		}
+	} else {
+
+		chirps, err = cfg.db.GetAllChirps(r.Context())
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "error retrieving chirps")
+			log.Printf("error retrieving chirps table: %s", err)
+			return
+		}
 	}
 
 	respondWithJSON(w, http.StatusOK, chirps)
